@@ -1,110 +1,179 @@
-# FHEVM Hardhat Template
+# SecureVote
 
-A Hardhat-based template for developing Fully Homomorphic Encryption (FHE) enabled Solidity smart contracts using the
-FHEVM protocol by Zama.
+SecureVote is an encrypted on-chain voting system built on Zama FHEVM. It allows anyone to create polls, cast
+privacy-preserving votes, and publish verifiable results after the voting window closes. Votes and tallies remain
+encrypted during the poll, and the final cleartext results are published on-chain with a cryptographic proof.
 
-## Quick Start
+## Overview
 
-For detailed instructions see:
-[FHEVM Hardhat Quick Start Tutorial](https://docs.zama.ai/protocol/solidity-guides/getting-started/quick-start-tutorial)
+SecureVote focuses on one core idea: strong privacy with verifiable outcomes. Voters submit encrypted choices, the
+contract maintains encrypted tallies, and only after the end time can the encrypted totals become publicly
+decryptable. Once decryption is available, anyone can submit the cleartext results and proof to finalize the poll.
 
-### Prerequisites
+## Problems Solved
 
-- **Node.js**: Version 20 or higher
-- **npm or yarn/pnpm**: Package manager
+- Ballot privacy: individual votes and running tallies are never revealed during the vote.
+- Trust minimization: results are derived from encrypted counts and verified on-chain.
+- Early influence resistance: no partial results are visible before the poll ends.
+- Accountability: results are published with a verifiable decryption proof.
+- Permissionless finalization: any participant can end a poll and publish results.
 
-### Installation
+## Key Capabilities
 
-1. **Install dependencies**
+- Create polls with a name, 2-4 options, and a fixed start/end time.
+- Cast votes with Zama FHE encrypted inputs.
+- Maintain encrypted tallies on-chain throughout the voting window.
+- End polls after the end time and make tallies publicly decryptable.
+- Publish cleartext results on-chain with a decryption proof.
+- Query poll metadata, encrypted counts, and published results.
 
-   ```bash
-   npm install
-   ```
+## End-to-End Flow
 
-2. **Set up environment variables**
+1. Create a poll with name, options, start time, and end time.
+2. Voters submit encrypted choices; the contract updates encrypted tallies.
+3. Once the end time passes, anyone calls `endPoll` to make tallies publicly decryptable.
+4. Off-chain decryption produces cleartext totals and a proof.
+5. Anyone submits the results and proof to `publishResults` to finalize the poll.
 
-   ```bash
-   npx hardhat vars set MNEMONIC
+## Advantages
 
-   # Set your Infura API key for network access
-   npx hardhat vars set INFURA_API_KEY
+- Privacy by design: encrypted ballots and tallies prevent leakage.
+- Verifiable outcomes: results are accepted only with a valid FHEVM decryption proof.
+- Simple governance UX: anyone can end and publish results without special permissions.
+- Minimal data exposure: only metadata and final results become public.
+- Zama FHEVM compatibility: uses standard FHEVM patterns and APIs.
 
-   # Optional: Set Etherscan API key for contract verification
-   npx hardhat vars set ETHERSCAN_API_KEY
-   ```
+## Tech Stack
 
-3. **Compile and test**
+- Smart contracts: Solidity 0.8.x with Zama FHEVM (`@fhevm/solidity`)
+- Contract tooling: Hardhat, hardhat-deploy, TypeChain
+- Languages: TypeScript and Solidity
+- Frontend: React + Vite + viem (read) + ethers (write) + RainbowKit
+- Relayer integration: Zama relayer SDK for decryption proofs
 
-   ```bash
-   npm run compile
-   npm run test
-   ```
+## Repository Layout
 
-4. **Deploy to local network**
+- `contracts/`: Solidity contracts, including `SecureVote.sol`
+- `deploy/`: Deployment scripts
+- `deployments/`: Network deployment artifacts and ABIs (use Sepolia ABI for frontend)
+- `tasks/`: Hardhat tasks for admin/CLI flows
+- `test/`: Contract tests
+- `frontend/`: React client
 
-   ```bash
-   # Start a local FHEVM-ready node
-   npx hardhat node
-   # Deploy to local network
-   npx hardhat deploy --network localhost
-   ```
+## Prerequisites
 
-5. **Deploy to Sepolia Testnet**
+- Node.js 20+
+- npm 7+
 
-   ```bash
-   # Deploy to Sepolia
-   npx hardhat deploy --network sepolia
-   # Verify contract on Etherscan
-   npx hardhat verify --network sepolia <CONTRACT_ADDRESS>
-   ```
+## Installation
 
-6. **Test on Sepolia Testnet**
-
-   ```bash
-   # Once deployed, you can run a simple test on Sepolia.
-   npx hardhat test --network sepolia
-   ```
-
-## 📁 Project Structure
-
-```
-fhevm-hardhat-template/
-├── contracts/           # Smart contract source files
-│   └── FHECounter.sol   # Example FHE counter contract
-├── deploy/              # Deployment scripts
-├── tasks/               # Hardhat custom tasks
-├── test/                # Test files
-├── hardhat.config.ts    # Hardhat configuration
-└── package.json         # Dependencies and scripts
+```bash
+npm install
 ```
 
-## 📜 Available Scripts
+## Environment Configuration
 
-| Script             | Description              |
-| ------------------ | ------------------------ |
-| `npm run compile`  | Compile all contracts    |
-| `npm run test`     | Run all tests            |
-| `npm run coverage` | Generate coverage report |
-| `npm run lint`     | Run linting checks       |
-| `npm run clean`    | Clean build artifacts    |
+Create a `.env` file in the repo root:
 
-## 📚 Documentation
+```bash
+PRIVATE_KEY=your_wallet_private_key
+INFURA_API_KEY=your_infura_project_id
+ETHERSCAN_API_KEY=optional_etherscan_key
+```
 
-- [FHEVM Documentation](https://docs.zama.ai/fhevm)
-- [FHEVM Hardhat Setup Guide](https://docs.zama.ai/protocol/solidity-guides/getting-started/setup)
-- [FHEVM Testing Guide](https://docs.zama.ai/protocol/solidity-guides/development-guide/hardhat/write_test)
-- [FHEVM Hardhat Plugin](https://docs.zama.ai/protocol/solidity-guides/development-guide/hardhat)
+Only `PRIVATE_KEY` and `INFURA_API_KEY` are required for Sepolia deployments. Private keys are used directly (no
+mnemonic based setup).
 
-## 📄 License
+## Compile and Test
 
-This project is licensed under the BSD-3-Clause-Clear License. See the [LICENSE](LICENSE) file for details.
+```bash
+npm run compile
+npm run test
+```
 
-## 🆘 Support
+## Local Development Network
 
-- **GitHub Issues**: [Report bugs or request features](https://github.com/zama-ai/fhevm/issues)
-- **Documentation**: [FHEVM Docs](https://docs.zama.ai)
-- **Community**: [Zama Discord](https://discord.gg/zama)
+```bash
+npx hardhat node
+npx hardhat deploy --network localhost
+```
 
----
+## Sepolia Deployment
 
-**Built with ❤️ by the Zama team**
+The recommended order is:
+
+1. Run tests and tasks locally.
+2. Deploy to Sepolia with your private key.
+
+```bash
+npm run deploy:sepolia
+npm run verify:sepolia <CONTRACT_ADDRESS>
+```
+
+## Hardhat Tasks
+
+Examples (all tasks support `--network`):
+
+```bash
+npx hardhat --network sepolia task:address
+npx hardhat --network sepolia task:create-poll --name "Best Snack" --options "Tacos,Pizza" --start 1710000000 --end 1710003600
+npx hardhat --network sepolia task:vote --poll 0 --choice 1
+```
+
+Notes:
+- `task:create-poll` expects 2-4 options and a valid time range.
+- `task:vote` encrypts the choice using the FHEVM CLI API before submitting.
+
+## Frontend
+
+The frontend lives in `frontend/` and consumes the Sepolia deployment ABI from `deployments/sepolia`.
+Read calls use viem and write calls use ethers.
+
+Typical flow:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+## Contract Interfaces
+
+- `createPoll(name, options, start, end)`: creates a new poll.
+- `vote(pollId, encryptedChoice, inputProof)`: encrypted vote submission.
+- `endPoll(pollId)`: marks the poll as ended and enables public decryption.
+- `publishResults(pollId, cleartextValues, decryptionProof)`: verifies and publishes results.
+- `getPollInfo`, `getEncryptedCounts`, `getPublishedResults`, `hasVoted`: read APIs.
+
+## Security and Privacy Model
+
+- Encrypted tallies are stored as `euint32` values; the contract never sees cleartext votes.
+- `endPoll` toggles public decryption for the encrypted counts only after the poll is over.
+- `publishResults` validates the decryption proof with FHEVM before accepting results.
+- Poll metadata and final results are public; intermediate tallies are never revealed.
+
+## Operational Notes
+
+- Polls are identified by incremental IDs from `pollCount()`.
+- A voter can only vote once per poll.
+- Any account can end a poll after the end time.
+- Any account can publish results once public decryption is ready.
+
+## Limitations
+
+- Option count is limited to 2-4 choices per poll.
+- Voting and decryption depend on FHEVM infrastructure support.
+- Result publication requires a valid decryption proof obtained off-chain.
+
+## Roadmap
+
+- Multi-choice and ranked-choice voting support.
+- Optional quorum and minimum participation thresholds.
+- Improved UX for decryption proof acquisition and status tracking.
+- Gas optimizations for large poll counts and high participation.
+- On-chain metadata extensions (description, category, and media links).
+- Expanded indexing and analytics for public result history.
+
+## License
+
+BSD-3-Clause-Clear. See `LICENSE`.
